@@ -147,6 +147,3 @@ func set_stance(_stance_name : String):
 func is_stance_blocked(_stance_name : String) -> bool:
 	var stance = get_node(stances[_stance_name])
 	return stance.is_blocked()
-
-
-
