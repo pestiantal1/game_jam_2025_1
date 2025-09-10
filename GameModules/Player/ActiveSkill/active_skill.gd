@@ -22,7 +22,7 @@ enum State {READY, WINDING_UP, DELIVERING, RECOVERING}
 @export_category("VFX")
 @export var vfx_delay : float = 0.1
 @export var vfx_duration : float = 0.3
-@export var vfx : GPUTrail3D
+#@export var vfx : GPUTrail3D
 
 
 func _ready():
@@ -30,7 +30,7 @@ func _ready():
 
 
 func load_vfx():
-	vfx.show()
+	#vfx.show()
 	await get_tree().process_frame
 	await get_tree().process_frame
-	vfx.hide()
+	#vfx.hide()

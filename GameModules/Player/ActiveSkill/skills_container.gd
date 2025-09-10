@@ -104,7 +104,7 @@ func windup():
 	set_attack_transition("attack_buffer_" + str(attack_buffer_id))
 	set_attack_buffer_timescale(0)
 	windup_timer.start(current_active_skill.windup_duration)
-	stop_vfx()
+	#stop_vfx()
 
 func _on_windup_timer_timeout():
 	deliver()
@@ -114,7 +114,7 @@ func deliver():
 	attack_state = ActiveSkill.State.DELIVERING
 	set_attack_buffer_timescale(1)
 	delivery_timer.start(current_active_skill.delivery_duration)
-	play_vfx()
+	#play_vfx()
 
 func _on_delivery_timer_timeout():
 	recover()
@@ -123,7 +123,7 @@ func _on_delivery_timer_timeout():
 func recover():
 	attack_state = ActiveSkill.State.RECOVERING
 	recovery_timer.start(current_active_skill.recovery_duration)
-	stop_vfx()
+	#stop_vfx()
 
 
 func _on_recovery_timer_timeout():
@@ -146,17 +146,14 @@ func _on_end_timer_timeout():
 	set_attack_transition("end_attack")
 
 
-func play_vfx():
-	await get_tree().create_timer(current_active_skill.vfx_delay).timeout
-	current_active_skill.vfx.show()
-
-	await get_tree().create_timer(current_active_skill.vfx_duration).timeout
-	stop_vfx()
-
-
-func stop_vfx():
-	current_active_skill.vfx.hide()
-	current_active_skill.vfx.restart()
+#func play_vfx():
+	#await get_tree().create_timer(current_active_skill.vfx_delay).timeout
+	#current_active_skill.vfx.show()
+#
+	#await get_tree().create_timer(current_active_skill.vfx_duration).timeout
+	#stop_vfx()
 
 
-
+#func stop_vfx():
+	#current_active_skill.vfx.hide()
+	#current_active_skill.vfx.restart()

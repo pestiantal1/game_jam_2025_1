@@ -1,4 +1,4 @@
-[gd_scene load_steps=84 format=3 uid="uid://c4sa6c60r1myd"]
+[gd_scene load_steps=86 format=3 uid="uid://c4sa6c60r1myd"]
 
 [ext_resource type="Script" uid="uid://bn0yxtksrslp8" path="res://GameModules/Player/Player.gd" id="1_phkkc"]
 [ext_resource type="Script" uid="uid://oiswoal14ltc" path="res://GameModules/Player/movement_controller.gd" id="1_t2242"]
@@ -28,11 +28,6 @@
 [ext_resource type="Script" uid="uid://dqy7npww5gooh" path="res://GameModules/Player/ActiveSkill/active_skill_controller.gd" id="23_6gp82"]
 [ext_resource type="Script" uid="uid://dxd0p3kc2d6yc" path="res://GameModules/Player/weapon.gd" id="24_hq7bj"]
 [ext_resource type="Script" uid="uid://v3opw2s0gud" path="res://GameModules/Player/ActiveSkill/skills_container.gd" id="24_nqnc4"]
-[ext_resource type="Shader" uid="uid://duob45kiaiv0q" path="res://GPUTrail-main/shaders/trail.gdshader" id="26_2u4i1"]
-[ext_resource type="Shader" uid="uid://7cvcu712tbr1" path="res://GPUTrail-main/shaders/trail_draw_pass.gdshader" id="27_mxsyo"]
-[ext_resource type="Texture2D" uid="uid://crk6pkb7e5rwc" path="res://GPUTrail-main/defaults/texture.tres" id="28_ibyq1"]
-[ext_resource type="Texture2D" uid="uid://ct31fhxvcragr" path="res://GPUTrail-main/defaults/curve.tres" id="29_xb2w7"]
-[ext_resource type="Script" uid="uid://b3o2godj60bg8" path="res://GPUTrail-main/GPUTrail3D.gd" id="30_300y4"]
 [ext_resource type="Texture2D" uid="uid://siffjee2en2r" path="res://GameModules/Player/ActiveSkill/slash_effect.png" id="30_uv7cn"]
 [ext_resource type="PackedScene" uid="uid://c3x5qwtm5l7ar" path="res://GameModules/Player/hammer.tscn" id="32_lj038"]
 [ext_resource type="Script" uid="uid://d2kdn37u0lq7e" path="res://GameModules/Player/ComboSystem/primary_attack.gd" id="34_3x64e"]
@@ -63,21 +58,399 @@ fog_light_color = Color(0.168627, 0.145098, 0.254902, 1)
 fog_density = 0.0
 volumetric_fog_emission = Color(1, 1, 1, 1)
 
+[sub_resource type="Shader" id="Shader_o4fqm"]
+code = "shader_type particles;
+
+render_mode keep_data,disable_force,disable_velocity;
+
+
+
+void process() {
+	// CUSTOM.w tracks the particles place in the trail, in range (0..LIFETIME]
+	// requires that LIFETIME = number of particles
+	const float amount = LIFETIME;
+	
+	vec4 a = EMISSION_TRANSFORM * vec4(0,1,0,1);
+	vec4 b = EMISSION_TRANSFORM * vec4(0,-1,0,1);
+	
+	// start
+	if(CUSTOM.w == 0.0){
+		CUSTOM.w = float(INDEX)+1.0;
+		
+		// needed to pass to draw pass
+		CUSTOM.z = amount;
+		
+		// needed to initialize in case of CUSTOM.w == 2.0
+		TRANSFORM = mat4(a,a,b,b);
+	}
+	
+	// restart
+	if(CUSTOM.w == amount+1.0){
+		CUSTOM.w = 1.0;
+	}
+	
+	if(CUSTOM.w == 1.0){
+		// sets the quad to the line to cache this frame, it is not yet visible
+		TRANSFORM = mat4(a,a,b,b);
+	}
+	
+	if(CUSTOM.w == 2.0){
+		// sets the right edge of the quad
+		TRANSFORM[1] = a;
+		TRANSFORM[2] = b;
+	}
+
+	CUSTOM.w++;
+}"
+
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_275d6"]
-shader = ExtResource("26_2u4i1")
+shader = SubResource("Shader_o4fqm")
+
+[sub_resource type="Shader" id="Shader_gfmxp"]
+code = "shader_type spatial;
+
+render_mode unshaded,world_vertex_coords,cull_disabled;
+
+uniform sampler2D tex : repeat_disable, source_color, hint_default_white;
+uniform sampler2D color_ramp : repeat_disable, source_color, hint_default_white;
+uniform sampler2D curve : repeat_disable, hint_default_white;
+uniform mat4 emmission_transform = mat4(1);
+uniform int flags = 0;
+/*uniform bool vertical_texture = false;
+uniform bool use_red_as_alpha = false;
+uniform bool billboard = false;
+uniform bool dewiggle = false;
+uniform bool snap_to_transform = false;*/
+
+#define vertical_texture  bool(flags & 1)
+#define use_red_as_alpha  bool(flags & 2)
+#define billboard		  bool(flags & 4)
+#define dewiggle 		  bool(flags & 8)
+#define snap_to_transform bool(flags & 16)
+#define clip_overlaps bool(flags & 32)
+
+
+varying float scale_interp;
+varying vec2 clip;
+varying vec2 mesh_uv;
+void vertex(){
+	mesh_uv = UV;
+	
+	mat4 my_model_matrix = MODEL_MATRIX;
+	if(snap_to_transform && INSTANCE_CUSTOM.w==2.0){
+		my_model_matrix[1] = emmission_transform * vec4(0,1,0,1);
+		my_model_matrix[2] = emmission_transform * vec4(0,-1,0,1);
+	}
+	
+	if(billboard){
+		vec3 t0 = my_model_matrix[0].xyz-my_model_matrix[3].xyz;
+		vec3 t1 = my_model_matrix[1].xyz-my_model_matrix[2].xyz;
+		
+		//vec3 up1 = up0;
+		vec3 up0 = length(t0)*normalize(
+			cross(
+				my_model_matrix[3].xyz-INV_VIEW_MATRIX[3].xyz,
+				//-INV_VIEW_MATRIX[2].xyz,
+				t0));
+		vec3 up1 = length(t1)*normalize(
+			cross(
+				my_model_matrix[2].xyz-INV_VIEW_MATRIX[3].xyz,
+				//-INV_VIEW_MATRIX[2].xyz,
+				t1));
+		
+		my_model_matrix[0] = my_model_matrix[3];
+		my_model_matrix[1] = my_model_matrix[2];
+		
+		my_model_matrix[0].xyz += up0;
+		my_model_matrix[3].xyz -= up0;
+		
+		my_model_matrix[1].xyz += up1;
+		my_model_matrix[2].xyz -= up1;
+	}
+	
+	vec3 a = mix(my_model_matrix[1].xyz,my_model_matrix[0].xyz,UV.x);
+	vec3 b = mix(my_model_matrix[2].xyz,my_model_matrix[3].xyz,UV.x);
+
+	UV.x = (UV.x + INSTANCE_CUSTOM.w-1.0 - 2.0)/(INSTANCE_CUSTOM.z-1.0);
+
+	
+	float h = textureLod(curve, vec2(UV.x), 0.0).x;//h=1.0;
+	
+	VERTEX = mix(a,b,(UV.y-0.5)*h + 0.5);
+
+	if(dewiggle){
+		scale_interp = h;
+		UV *= scale_interp;
+	}
+	
+		
+	clip.x = dot(VERTEX - INV_VIEW_MATRIX[3].xyz,cross(my_model_matrix[1].xyz - INV_VIEW_MATRIX[3].xyz,my_model_matrix[2].xyz - INV_VIEW_MATRIX[3].xyz));
+	clip.y = dot(VERTEX - INV_VIEW_MATRIX[3].xyz,cross(my_model_matrix[3].xyz - INV_VIEW_MATRIX[3].xyz,my_model_matrix[0].xyz - INV_VIEW_MATRIX[3].xyz));
+}
+
+void fragment(){
+	//if(billboard && !FRONT_FACING) discard;
+	
+	vec2 clip0 = clip;
+	float ababab = clip0.x*clip0.y;
+	//ababab += dFdx(ababab) + dFdy(ababab);
+	//clip0 -= fwidth(clip0);
+	if(clip_overlaps && ababab < 0.0) { 
+		
+		
+		
+		if(abs(mesh_uv.x-0.5)<0.5)
+			discard;
+	}
+	
+	vec2 base_uv = UV;
+
+	if(dewiggle){
+		base_uv /= scale_interp;
+	}
+	
+	vec2 raw_uv = base_uv;
+
+	if(vertical_texture){
+		base_uv = base_uv.yx;
+	}
+	
+	vec4 T = textureLod(tex, base_uv, 0.0);
+	ALBEDO = T.rgb;
+	ALPHA = T.a;
+	
+	if(use_red_as_alpha){
+		ALBEDO = vec3(1);
+		ALPHA = T.r;
+	}
+	
+	T = textureLod(color_ramp, raw_uv, 0.0);
+	ALBEDO *= T.rgb;
+	ALPHA *= T.a;
+	
+	//ALBEDO = vec3(UV,0);
+	
+	if((base_uv.x < .01) || (.99 < base_uv.x)){
+		//ALBEDO = vec3(1,0,1);
+	}
+}"
+
+[sub_resource type="Gradient" id="Gradient_nk704"]
+colors = PackedColorArray(0, 0.796078, 1, 0.392157, 0, 0.933721, 1, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_1n88h"]
+gradient = SubResource("Gradient_nk704")
+
+[sub_resource type="Curve" id="Curve_hhuuh"]
+_data = [Vector2(0, 0.407507), 0.0, -0.469169, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_opjno"]
+curve = SubResource("Curve_hhuuh")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_x3gut"]
 resource_local_to_scene = true
 render_priority = 0
-shader = ExtResource("27_mxsyo")
+shader = SubResource("Shader_gfmxp")
 shader_parameter/tex = ExtResource("30_uv7cn")
-shader_parameter/color_ramp = ExtResource("28_ibyq1")
-shader_parameter/curve = ExtResource("29_xb2w7")
+shader_parameter/color_ramp = SubResource("GradientTexture1D_1n88h")
+shader_parameter/curve = SubResource("CurveTexture_opjno")
 shader_parameter/emmission_transform = Projection(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
 shader_parameter/flags = 40
 
 [sub_resource type="QuadMesh" id="QuadMesh_1vhxo"]
 material = SubResource("ShaderMaterial_x3gut")
+
+[sub_resource type="GDScript" id="GDScript_meb7l"]
+script/source = "@tool
+@icon(\"bounce.svg\")
+class_name GPUTrail3D extends GPUParticles3D
+
+## [br]A node for creating a ribbon trail effect.
+## [br][color=purple]Made by celyk[/color]
+##
+## This node serves as an alternative to CPU based trails.[br]
+
+
+# TODO:
+# Add categories for parameters
+# Add flipbook support
+# Hide the actual GPUParticles3D node
+# Restructure code, use enums for flags
+# Add more polygons, make trail smoother
+# Add an acceleration parameter
+# Add a gizmo/visual indicator of the emmission  line
+# Design an icon.svg
+# Port to Godot 3.5
+# Port to 2D
+# Allow custom material
+
+# PUBLIC
+
+## Length is the number of steps in the trail
+@export var length = 100 : set = _set_length
+
+## The main texture of the trail.[br]
+## [br]Set [member vertical_texture] to adjust for orientation[br]
+##
+## [br]Enable [member use_red_as_alpha] to use the red color channel as alpha
+@export var texture : Texture : set = _set_texture
+
+## A color ramp for modulating the color along the length of the trail
+@export var color_ramp : GradientTexture1D : set = _set_color_ramp
+
+## A curve for modulating the width along the length of the trail
+@export var curve : CurveTexture : set = _set_curve
+
+## Set [member vertical_texture] to adjust for orientation
+@export var vertical_texture := false : set = _set_vertical_texture
+
+## Enable [member use_red_as_alpha] to use the red color channel of [member texture] as alpha
+@export var use_red_as_alpha := false : set = _set_use_red_as_alpha
+
+## Makes trail face camera. I haven't finished this yet
+@export var billboard := false : set = _set_billboard
+
+## Enable to improve the mapping of [member texture] to the trail
+@export var dewiggle := true : set = _set_dewiggle
+
+## Enable to improve the mapping of [member texture] to the trail
+@export var clip_overlaps := true : set = _set_clip_overlaps
+
+## Enable [member snap_to_transform] to snap the start of the trail to the nodes position. This may not be noticeable unless you
+## have changed [member fixed_fps], which you can use to optimize the trail
+@export var snap_to_transform := false : set = _set_snap_to_transform
+
+
+# PRIVATE
+
+const _DEFAULT_TEXTURE = \"defaults/texture.tres\"
+const _DEFAULT_CURVE = \"defaults/curve.tres\"
+
+var _defaults_have_been_set = false
+func _get_property_list():
+	return [{\"name\": \"_defaults_have_been_set\",\"type\": TYPE_BOOL,\"usage\": PROPERTY_USAGE_NO_EDITOR}]
+
+func _ready():
+	if not _defaults_have_been_set:
+		_defaults_have_been_set = true
+		
+		
+		amount = length
+		lifetime = length
+		explosiveness = 1 # emits all particles at once
+		fixed_fps = 0 # the main fps is default
+		
+		process_material = ShaderMaterial.new()
+		#process_material.shader = preload(\"shaders/trail.gdshader\")
+		
+		draw_pass_1 = QuadMesh.new()
+		draw_pass_1.material = ShaderMaterial.new()
+		#draw_pass_1.material.shader = preload(\"shaders/trail_draw_pass.gdshader\")
+
+		#color_ramp = preload(_DEFAULT_TEXTURE)
+		#curve = preload(_DEFAULT_CURVE)
+		
+		draw_pass_1.material.resource_local_to_scene = true
+	
+	length = length
+	vertical_texture = vertical_texture
+	use_red_as_alpha = use_red_as_alpha
+	billboard = billboard
+	dewiggle = dewiggle
+	clip_overlaps = clip_overlaps
+	snap_to_transform = snap_to_transform
+
+func _set_length(value):
+	length = value
+	
+	if _defaults_have_been_set:
+		amount = value
+		lifetime = value
+	
+	restart()
+func _set_texture(value):
+	texture = value
+	if value: 
+		draw_pass_1.material.set_shader_parameter(\"tex\", texture)
+	else:
+		pass
+		#draw_pass_1.material.set_shader_parameter(\"tex\", preload(_DEFAULT_TEXTURE))
+func _set_color_ramp(value):
+	color_ramp = value
+	draw_pass_1.material.set_shader_parameter(\"color_ramp\", color_ramp)
+func _set_curve(value):
+	curve = value
+	if value: 
+		draw_pass_1.material.set_shader_parameter(\"curve\", curve)
+	else:
+		pass
+		#draw_pass_1.material.set_shader_parameter(\"curve\", preload(_DEFAULT_CURVE))
+func _set_vertical_texture(value):
+	vertical_texture = value
+	_flags = _set_flag(_flags,0,value)
+	draw_pass_1.material.set_shader_parameter(\"flags\", _flags)
+func _set_use_red_as_alpha(value):
+	use_red_as_alpha = value
+	_flags = _set_flag(_flags,1,value)
+	draw_pass_1.material.set_shader_parameter(\"flags\", _flags)
+func _set_billboard(value):
+	billboard = value
+	_flags = _set_flag(_flags,2,value)
+	draw_pass_1.material.set_shader_parameter(\"flags\", _flags)
+	if value && _defaults_have_been_set:
+		_update_billboard_transform( global_transform.basis[0] )
+	
+	restart()
+func _set_dewiggle(value):
+	dewiggle = value
+	_flags = _set_flag(_flags,3,value)
+	draw_pass_1.material.set_shader_parameter(\"flags\", _flags)
+func _set_snap_to_transform(value):
+	snap_to_transform = value
+	_flags = _set_flag(_flags,4,value)
+	draw_pass_1.material.set_shader_parameter(\"flags\", _flags)
+func _set_clip_overlaps(value):
+	clip_overlaps = value
+	_flags = _set_flag(_flags,5,value)
+	draw_pass_1.material.set_shader_parameter(\"flags\", _flags)
+
+
+@onready var _old_pos : Vector3 = global_position
+@onready var _billboard_transform : Transform3D = global_transform
+func _process(delta):
+	if(snap_to_transform):
+		draw_pass_1.material.set_shader_parameter(\"emmission_transform\", global_transform)
+	
+	
+	await RenderingServer.frame_pre_draw
+	
+	if(billboard):
+		var delta_position = global_position - _old_pos
+		
+		if delta_position:
+			var tangent = global_transform.basis[1].length() * (delta_position).normalized()
+			_update_billboard_transform(tangent)
+
+		RenderingServer.instance_set_transform(get_instance(), _billboard_transform)
+	
+	_old_pos = global_position
+
+func _update_billboard_transform(tangent):
+	_billboard_transform = global_transform
+	var p = _billboard_transform.basis[1]
+	var x = tangent
+	var angle = p.angle_to(x)
+	var rotation_axis = p.cross(x).normalized()
+	if rotation_axis: 
+		_billboard_transform.basis = _billboard_transform.basis.rotated(rotation_axis,angle)
+		_billboard_transform.basis = _billboard_transform.basis.scaled(Vector3(0.5,0.5,0.5))
+		_billboard_transform.origin += _billboard_transform.basis[1]
+
+var _flags = 0
+func _set_flag(i, idx : int, value : bool):
+	return (i & ~(1 << idx)) | (int(value) << idx)
+"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_15s3x"]
 animation = &"falling"
@@ -482,21 +855,21 @@ higher_stances = [NodePath("../crouch"), NodePath("../stealth"), NodePath("../up
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 
 [node name="Skeleton3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan" index="0"]
-bones/0/position = Vector3(-2.49086e-08, -4.52952, -7.8698)
+bones/0/position = Vector3(2.72994e-08, -4.08125, -7.8698)
 bones/1/rotation = Quaternion(0.652857, 0.271621, 0.652857, -0.271621)
 bones/2/position = Vector3(-9.40142e-12, 4.51278, 0.000295821)
-bones/2/rotation = Quaternion(0.601114, -2.27745e-10, 1.98043e-08, 0.799164)
+bones/2/rotation = Quaternion(0.596523, -1.98144e-11, 1.9504e-08, 0.802596)
 bones/3/position = Vector3(3.48513e-14, 5.69654, -0.000103159)
-bones/3/rotation = Quaternion(-0.113386, -6.02047e-10, 1.68027e-09, 0.993551)
+bones/3/rotation = Quaternion(-0.116042, -5.20857e-10, 1.49333e-09, 0.993244)
 bones/4/position = Vector3(3.01981e-14, 7.21844, -6.7563e-06)
-bones/4/rotation = Quaternion(-0.0391848, 2.42519e-09, -2.66618e-09, 0.999232)
+bones/4/rotation = Quaternion(-0.0439334, 2.63445e-09, -2.94916e-09, 0.999035)
 bones/5/rotation = Quaternion(0.0034532, 0.00659531, -0.689901, 0.723865)
 bones/5/scale = Vector3(1, 1, 1)
 bones/6/position = Vector3(0.000198333, 10.6318, -7.99242e-05)
-bones/6/rotation = Quaternion(-0.0100288, 0.064616, -0.580319, 0.81176)
+bones/6/rotation = Quaternion(-0.0104645, 0.0658984, -0.581121, 0.811077)
 bones/6/scale = Vector3(1, 1, 1)
 bones/7/position = Vector3(-0.000309722, 19.8107, 9.89807e-05)
-bones/7/rotation = Quaternion(0.268247, -0.65769, -0.14287, 0.689258)
+bones/7/rotation = Quaternion(0.268742, -0.657776, -0.143197, 0.688914)
 bones/8/position = Vector3(6.08109e-05, 18.4529, -2.20622e-05)
 bones/8/rotation = Quaternion(0.111513, 0.878494, -0.125152, 0.447382)
 bones/9/position = Vector3(-1.22997, 8.21134, 0.541571)
@@ -541,9 +914,9 @@ bones/23/scale = Vector3(1, 1, 1)
 bones/24/rotation = Quaternion(0.00345325, -0.00659526, 0.689901, 0.723865)
 bones/24/scale = Vector3(1, 1, 1)
 bones/25/position = Vector3(-0.000198306, 10.6318, -7.98023e-05)
-bones/25/rotation = Quaternion(-0.0102612, -0.0653001, 0.580747, 0.811396)
+bones/25/rotation = Quaternion(-0.00989258, -0.064215, 0.580067, 0.811973)
 bones/26/position = Vector3(0.000311516, 19.8107, 0.000100698)
-bones/26/rotation = Quaternion(0.268508, 0.657736, 0.143043, 0.689076)
+bones/26/rotation = Quaternion(0.268126, 0.657669, 0.142791, 0.689341)
 bones/27/position = Vector3(-6.20635e-05, 18.4529, -1.91687e-05)
 bones/27/rotation = Quaternion(0.111513, -0.878494, 0.125152, 0.447382)
 bones/27/scale = Vector3(1, 1, 1)
@@ -583,31 +956,31 @@ bones/41/scale = Vector3(1, 1, 1)
 bones/42/position = Vector3(-0.000194195, 2.81332, 0.00013998)
 bones/42/rotation = Quaternion(0.107196, -0.156159, -0.103579, 0.976419)
 bones/42/scale = Vector3(1, 1, 1)
-bones/43/rotation = Quaternion(0.128499, -1.3812e-09, 2.59357e-09, 0.99171)
+bones/43/rotation = Quaternion(0.141968, -1.85436e-09, 3.43891e-09, 0.989871)
 bones/44/position = Vector3(-4.26326e-14, 9.35612, 0.000141649)
 bones/44/rotation = Quaternion(-0.21385, -5.23804e-10, 1.16017e-09, 0.976867)
 bones/45/position = Vector3(7.9319, -2.35348, -1.35572)
-bones/45/rotation = Quaternion(0.940489, 0.200786, -0.270328, -0.0456927)
+bones/45/rotation = Quaternion(0.939526, 0.205568, -0.266709, -0.0624332)
 bones/46/position = Vector3(3.2709e-06, 32.5686, -7.26799e-05)
-bones/46/rotation = Quaternion(0.229521, 0.245179, -0.0445527, 0.940863)
+bones/46/rotation = Quaternion(0.201231, 0.236816, -0.0315642, 0.949962)
 bones/47/position = Vector3(0.000426019, 31.1547, -1.01913e-05)
-bones/47/rotation = Quaternion(-0.434001, 0.0814551, 0.143049, 0.885745)
+bones/47/rotation = Quaternion(-0.420328, 0.0842929, 0.142787, 0.892093)
 bones/47/scale = Vector3(1, 1, 1)
 bones/48/position = Vector3(-0.000454548, 9.98217, 7.08077e-05)
 bones/48/rotation = Quaternion(-0.268793, 0.0202766, 0.0276453, 0.962588)
 bones/49/position = Vector3(-7.9319, -2.35348, -1.35572)
-bones/49/rotation = Quaternion(0.849407, -0.304465, 0.281708, -0.326266)
+bones/49/rotation = Quaternion(0.847686, -0.305937, 0.280109, -0.330712)
 bones/50/position = Vector3(-3.18577e-06, 32.5686, -7.37654e-05)
-bones/50/rotation = Quaternion(0.236235, -0.401302, 0.071104, 0.882096)
+bones/50/rotation = Quaternion(0.225171, -0.398852, 0.0655806, 0.886518)
 bones/50/scale = Vector3(1, 1, 1)
 bones/51/position = Vector3(-0.000426404, 31.1547, -9.55513e-06)
-bones/51/rotation = Quaternion(-0.720237, 0.032231, -0.0825014, 0.68805)
+bones/51/rotation = Quaternion(-0.707332, 0.0290635, -0.0840858, 0.701261)
 bones/51/scale = Vector3(1, 1, 1)
 bones/52/position = Vector3(0.000454592, 9.98217, 7.0228e-05)
 bones/52/rotation = Quaternion(-0.268793, -0.0202766, -0.0276453, 0.962588)
 
 [node name="sword" type="BoneAttachment3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D" index="8" node_paths=PackedStringArray("skills_container", "visual")]
-transform = Transform3D(-0.462937, -0.191807, 0.86539, 0.575926, -0.807232, 0.129173, 0.673794, 0.5582, 0.484164, -28.0103, 67.0006, 6.21247)
+transform = Transform3D(-0.461919, -0.193295, 0.865603, 0.595084, -0.79122, 0.140875, 0.657651, 0.580179, 0.480506, -28.0704, 67.7526, 6.47635)
 visible = false
 bone_name = "hand_r"
 bone_idx = 27
@@ -627,7 +1000,7 @@ script = ExtResource("24_nqnc4")
 combo_tree = NodePath("../ComboTree")
 active_skills = [NodePath("ActiveSkill_1"), NodePath("ActiveSkill_2"), NodePath("ActiveSkill_3"), NodePath("ActiveSkill_4")]
 
-[node name="ActiveSkill_1" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword/SkillsContainer" node_paths=PackedStringArray("vfx")]
+[node name="ActiveSkill_1" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword/SkillsContainer"]
 script = ExtResource("23_0psin")
 animation_name = &"sword_slice_1"
 windup_duration = 0.1
@@ -635,9 +1008,8 @@ delivery_duration = 0.33
 recovery_duration = 0.1
 dash_duration = 0.15
 vfx_delay = 0.0
-vfx = NodePath("../GPUTrail3D")
 
-[node name="ActiveSkill_2" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword/SkillsContainer" node_paths=PackedStringArray("vfx")]
+[node name="ActiveSkill_2" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword/SkillsContainer"]
 script = ExtResource("23_0psin")
 animation_name = &"sword_slice_2"
 windup_duration = 0.1
@@ -646,9 +1018,8 @@ recovery_duration = 0.1
 dash_duration = 0.15
 dash_velocity = Vector3(0, 0, 8)
 vfx_delay = 0.0
-vfx = NodePath("../GPUTrail3D")
 
-[node name="ActiveSkill_3" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword/SkillsContainer" node_paths=PackedStringArray("vfx")]
+[node name="ActiveSkill_3" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword/SkillsContainer"]
 script = ExtResource("23_0psin")
 animation_name = &"sword_slice_3"
 windup_duration = 0.12
@@ -658,9 +1029,8 @@ dash_delay = 0.12
 dash_velocity = Vector3(0, 0, 8)
 vfx_delay = 0.0
 vfx_duration = 0.5
-vfx = NodePath("../GPUTrail3D")
 
-[node name="ActiveSkill_4" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword/SkillsContainer" node_paths=PackedStringArray("vfx")]
+[node name="ActiveSkill_4" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword/SkillsContainer"]
 script = ExtResource("23_0psin")
 animation_name = &"sword_slice_4"
 windup_duration = 0.15
@@ -671,9 +1041,8 @@ dash_duration = 0.25
 dash_velocity = Vector3(0, 0, 15)
 vfx_delay = 0.2
 vfx_duration = 0.7
-vfx = NodePath("../GPUTrail3D")
 
-[node name="ActiveSkill_5" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword/SkillsContainer" node_paths=PackedStringArray("vfx")]
+[node name="ActiveSkill_5" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword/SkillsContainer"]
 script = ExtResource("23_0psin")
 animation_name = &"sword_slice_5"
 windup_duration = 0.2
@@ -684,9 +1053,8 @@ dash_duration = 0.3
 dash_velocity = Vector3(0, 0, 10)
 vfx_delay = 0.15
 vfx_duration = 0.7
-vfx = NodePath("../GPUTrail3D")
 
-[node name="ActiveSkill_6" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword/SkillsContainer" node_paths=PackedStringArray("vfx")]
+[node name="ActiveSkill_6" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword/SkillsContainer"]
 script = ExtResource("23_0psin")
 animation_name = &"sword_slice_6"
 windup_duration = 0.15
@@ -697,7 +1065,6 @@ dash_duration = 0.25
 dash_velocity = Vector3(0, 0, 12)
 vfx_delay = 0.33
 vfx_duration = 0.7
-vfx = NodePath("../GPUTrail3D")
 
 [node name="GPUTrail3D" type="GPUParticles3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword/SkillsContainer"]
 transform = Transform3D(29.8737, -63.036, 71.6522, -92.0964, -38.7234, 4.33064, 25.0162, -67.2827, -69.6221, 41.799, 31.4194, 41.3517)
@@ -708,11 +1075,11 @@ explosiveness = 1.0
 fixed_fps = 0
 process_material = SubResource("ShaderMaterial_275d6")
 draw_pass_1 = SubResource("QuadMesh_1vhxo")
-script = ExtResource("30_300y4")
+script = SubResource("GDScript_meb7l")
 length = 50
 texture = ExtResource("30_uv7cn")
-color_ramp = ExtResource("28_ibyq1")
-curve = ExtResource("29_xb2w7")
+color_ramp = SubResource("GradientTexture1D_1n88h")
+curve = SubResource("CurveTexture_opjno")
 _defaults_have_been_set = true
 
 [node name="ComboTree" type="Node" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/sword"]
@@ -747,7 +1114,7 @@ script = ExtResource("34_3x64e")
 active_skill = NodePath("../../../../SkillsContainer/ActiveSkill_6")
 
 [node name="hammer" type="BoneAttachment3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D" index="9" node_paths=PackedStringArray("skills_container", "visual")]
-transform = Transform3D(-0.462937, -0.191807, 0.86539, 0.575926, -0.807232, 0.129173, 0.673794, 0.5582, 0.484164, -28.0103, 67.0006, 6.21247)
+transform = Transform3D(-0.461919, -0.193295, 0.865603, 0.595084, -0.79122, 0.140875, 0.657651, 0.580179, 0.480506, -28.0704, 67.7526, 6.47635)
 visible = false
 bone_name = "hand_r"
 bone_idx = 27
@@ -767,7 +1134,7 @@ script = ExtResource("24_nqnc4")
 combo_tree = NodePath("../ComboTree")
 active_skills = [NodePath("ActiveSkill_1"), NodePath("ActiveSkill_2"), NodePath("ActiveSkill_3"), NodePath("ActiveSkill_4")]
 
-[node name="ActiveSkill_1" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/hammer/SkillsContainer" node_paths=PackedStringArray("vfx")]
+[node name="ActiveSkill_1" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/hammer/SkillsContainer"]
 script = ExtResource("23_0psin")
 animation_name = &"hammer_atk_1"
 windup_duration = 0.1
@@ -775,9 +1142,8 @@ delivery_duration = 0.33
 recovery_duration = 0.1
 dash_duration = 0.15
 vfx_delay = 0.0
-vfx = NodePath("../GPUTrail3D")
 
-[node name="ActiveSkill_2" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/hammer/SkillsContainer" node_paths=PackedStringArray("vfx")]
+[node name="ActiveSkill_2" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/hammer/SkillsContainer"]
 script = ExtResource("23_0psin")
 animation_name = &"hammer_atk_2"
 windup_duration = 0.1
@@ -787,9 +1153,8 @@ dash_delay = 0.0
 dash_duration = 0.25
 dash_velocity = Vector3(0, 0, 15)
 vfx_delay = 0.0
-vfx = NodePath("../GPUTrail3D2")
 
-[node name="ActiveSkill_3" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/hammer/SkillsContainer" node_paths=PackedStringArray("vfx")]
+[node name="ActiveSkill_3" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/hammer/SkillsContainer"]
 script = ExtResource("23_0psin")
 animation_name = &"hammer_atk_3"
 windup_duration = 0.05
@@ -798,9 +1163,8 @@ dash_delay = 0.0
 dash_duration = 0.15
 dash_velocity = Vector3(0, 0, 8)
 vfx_delay = 0.0
-vfx = NodePath("../GPUTrail3D")
 
-[node name="ActiveSkill_4" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/hammer/SkillsContainer" node_paths=PackedStringArray("vfx")]
+[node name="ActiveSkill_4" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/hammer/SkillsContainer"]
 script = ExtResource("23_0psin")
 animation_name = &"hammer_atk_4"
 windup_duration = 0.05
@@ -810,9 +1174,8 @@ dash_delay = 0.0
 dash_duration = 0.15
 dash_velocity = Vector3(0, 0, 8)
 vfx_delay = 0.0
-vfx = NodePath("../GPUTrail3D")
 
-[node name="ActiveSkill_5" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/hammer/SkillsContainer" node_paths=PackedStringArray("vfx")]
+[node name="ActiveSkill_5" type="Node3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/hammer/SkillsContainer"]
 script = ExtResource("23_0psin")
 animation_name = &"hammer_atk_5"
 windup_duration = 0.1
@@ -820,7 +1183,6 @@ delivery_duration = 0.35
 recovery_duration = 0.2
 dash_velocity = Vector3(0, 0, 8)
 vfx_delay = 0.0
-vfx = NodePath("../GPUTrail3D")
 
 [node name="GPUTrail3D" type="GPUParticles3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/hammer/SkillsContainer"]
 transform = Transform3D(42.4791, -46.2825, 68.8378, -86.9809, -37.8905, 12.0013, 26.2057, -50.7411, -71.7508, 31.6914, 34.3304, 38.2312)
@@ -831,11 +1193,11 @@ explosiveness = 1.0
 fixed_fps = 0
 process_material = SubResource("ShaderMaterial_275d6")
 draw_pass_1 = SubResource("QuadMesh_1vhxo")
-script = ExtResource("30_300y4")
+script = SubResource("GDScript_meb7l")
 length = 50
 texture = ExtResource("30_uv7cn")
-color_ramp = ExtResource("28_ibyq1")
-curve = ExtResource("29_xb2w7")
+color_ramp = SubResource("GradientTexture1D_1n88h")
+curve = SubResource("CurveTexture_opjno")
 _defaults_have_been_set = true
 
 [node name="GPUTrail3D2" type="GPUParticles3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/hammer/SkillsContainer"]
@@ -847,11 +1209,11 @@ explosiveness = 1.0
 fixed_fps = 0
 process_material = SubResource("ShaderMaterial_275d6")
 draw_pass_1 = SubResource("QuadMesh_1vhxo")
-script = ExtResource("30_300y4")
+script = SubResource("GDScript_meb7l")
 length = 50
 texture = ExtResource("30_uv7cn")
-color_ramp = ExtResource("28_ibyq1")
-curve = ExtResource("29_xb2w7")
+color_ramp = SubResource("GradientTexture1D_1n88h")
+curve = SubResource("CurveTexture_opjno")
 _defaults_have_been_set = true
 
 [node name="ComboTree" type="Node" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D/hammer"]
