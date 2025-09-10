@@ -1,7 +1,8 @@
 [gd_scene load_steps=6 format=4 uid="uid://dwhns6o7sjtmc"]
 
-[ext_resource type="Texture2D" uid="uid://7seabrara2ve" path="res://assets/Clown/Clown.png" id="1_a868r"]
+[ext_resource type="Texture2D" uid="uid://7seabrara2ve" path="res://assets/characters/Clown/Clown.png" id="1_a868r"]
 [ext_resource type="AnimationLibrary" uid="uid://buha56v1j8qtv" path="res://animations/godot_chan_4_ANIMS.glb" id="2_urshu"]
+
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kk5hv"]
 resource_name = "Clown"

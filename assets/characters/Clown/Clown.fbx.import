@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b8jwinrhptbuf"
-path="res://.godot/imported/Clown.fbx-12b87ccb9db820df36c854ddda6b5938.scn"
+path="res://.godot/imported/Clown.fbx-7e6a5e67b73ff2da252dcfeb8d7b4496.scn"
 
 [deps]
 
-source_file="res://assets/Clown/Clown.fbx"
-dest_files=["res://.godot/imported/Clown.fbx-12b87ccb9db820df36c854ddda6b5938.scn"]
+source_file="res://assets/characters/Clown/Clown.fbx"
+dest_files=["res://.godot/imported/Clown.fbx-7e6a5e67b73ff2da252dcfeb8d7b4496.scn"]
 
 [params]
 
