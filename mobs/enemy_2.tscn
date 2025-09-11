@@ -1,0 +1,25 @@
+[gd_scene load_steps=2 format=3 uid="uid://djsjpi0v4102u"]
+
+[ext_resource type="PackedScene" uid="uid://11bqijvvr37a" path="res://assets/characters/Killer/Killer.fbx" id="1_1ovj2"]
+
+[node name="Meshroot" type="Node3D"]
+
+[node name="Killer" parent="." instance=ExtResource("1_1ovj2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00277591, -0.00896704, 0)
+
+[node name="GeneralSkeleton" parent="Killer" index="1"]
+bones/0/position = Vector3(2.46218e-07, 1.23977, -0.00475326)
+bones/7/rotation = Quaternion(0.471907, 0.526596, 0.471907, -0.526596)
+bones/8/rotation = Quaternion(0.0109467, 0.981124, 0.193033, 0.00372913)
+bones/9/rotation = Quaternion(-0.0680231, -0.685232, -0.00219332, 0.725138)
+bones/11/rotation = Quaternion(0.471922, -0.526583, -0.471923, -0.526582)
+bones/12/rotation = Quaternion(-0.015563, 0.981056, 0.193024, -0.00530127)
+bones/13/rotation = Quaternion(-0.0696849, 0.683845, 0.00383831, 0.726282)
+bones/15/rotation = Quaternion(1.01389e-06, -0.000106309, 0.999945, 0.0104891)
+bones/16/rotation = Quaternion(8.81031e-07, 1, -0.000693405, -7.88599e-06)
+bones/17/rotation = Quaternion(0.00742889, 0.706502, -0.707633, -0.00740895)
+bones/20/rotation = Quaternion(1.4813e-06, 0.000141577, 0.999945, -0.0104934)
+bones/21/rotation = Quaternion(-1.00024e-06, 1, -0.000929829, 2.58353e-06)
+bones/22/rotation = Quaternion(-0.0074291, 0.70651, -0.707625, 0.00740945)
+
+[editable path="Killer"]
