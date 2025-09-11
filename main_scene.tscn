@@ -1,4 +1,4 @@
-[gd_scene load_steps=90 format=3 uid="uid://c4sa6c60r1myd"]
+[gd_scene load_steps=88 format=3 uid="uid://c4sa6c60r1myd"]
 
 [ext_resource type="Script" uid="uid://bn0yxtksrslp8" path="res://GameModules/Player/Player.gd" id="1_phkkc"]
 [ext_resource type="Script" uid="uid://oiswoal14ltc" path="res://GameModules/Player/movement_controller.gd" id="1_t2242"]
@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://de40kmaedn4da" path="res://GameModules/Player/animation_controller.gd" id="2_k8yv2"]
 [ext_resource type="PackedScene" uid="uid://dg1qvasd07hvc" path="res://GameModules/Player/godot_chan_4.tscn" id="2_kfwyf"]
 [ext_resource type="Material" uid="uid://cpdpw14yr3gg8" path="res://GameModules/Environment/whitebox_1.material" id="2_v1mj4"]
-[ext_resource type="Texture2D" uid="uid://bsp1qgqm8bwrp" path="res://textures/Infernus_Tiles/Infernus_Ground.png" id="3_gfmxp"]
+[ext_resource type="Texture2D" uid="uid://ldrwiqf0d08w" path="res://textures/Infernus_Tiles/Infernus_Ground.png" id="3_gfmxp"]
 [ext_resource type="Material" uid="uid://devfmiypql8kc" path="res://GameModules/Environment/whitebox_2.material" id="3_sli5h"]
 [ext_resource type="Resource" uid="uid://f2c3g2k5oidj" path="res://GameModules/Player/JumpStates/air_jump.tres" id="3_txeef"]
 [ext_resource type="Script" uid="uid://botiwwxe6vnhk" path="res://GameModules/Player/camera_controller.gd" id="5_hepan"]
@@ -33,9 +33,7 @@
 [ext_resource type="PackedScene" uid="uid://c3x5qwtm5l7ar" path="res://GameModules/Player/hammer.tscn" id="32_lj038"]
 [ext_resource type="Script" uid="uid://d2kdn37u0lq7e" path="res://GameModules/Player/ComboSystem/primary_attack.gd" id="34_3x64e"]
 [ext_resource type="Script" uid="uid://4bv7q04lfxcf" path="res://GameModules/Player/ComboSystem/combo_tree.gd" id="34_gwkgl"]
-[ext_resource type="PackedScene" uid="uid://ccfer15h2b8wi" path="res://mobs/character_body_3d.tscn" id="35_1n88h"]
 [ext_resource type="Script" uid="uid://clgyrcmxfjotw" path="res://GameModules/Player/ComboSystem/secondary_attack.gd" id="35_era66"]
-[ext_resource type="Script" uid="uid://uj7fyev66f0a" path="res://enemy.gd" id="36_opjno"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1n88h"]
 albedo_color = Color(0.33, 0, 0.0494999, 0.729412)
@@ -869,19 +867,19 @@ higher_stances = [NodePath("../crouch"), NodePath("../stealth"), NodePath("../up
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 
 [node name="Skeleton3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan" index="0"]
-bones/0/position = Vector3(1.21735e-08, -4.42729, -7.8698)
+bones/0/position = Vector3(7.64001e-09, -4.53101, -7.8698)
 bones/1/rotation = Quaternion(0.652857, 0.271621, 0.652857, -0.271621)
 bones/2/position = Vector3(-9.40142e-12, 4.51278, 0.000295821)
-bones/2/rotation = Quaternion(0.602503, 1.44079e-10, 1.95296e-08, 0.798117)
+bones/2/rotation = Quaternion(0.603978, 1.84656e-10, 1.95357e-08, 0.797001)
 bones/3/position = Vector3(3.48513e-14, 5.69654, -0.000103159)
-bones/3/rotation = Quaternion(-0.112883, -5.26803e-10, 1.50702e-09, 0.993608)
+bones/3/rotation = Quaternion(-0.112687, -5.4176e-10, 1.54146e-09, 0.993631)
 bones/4/position = Vector3(3.01981e-14, 7.21844, -6.7563e-06)
-bones/4/rotation = Quaternion(-0.0377755, 2.63446e-09, -2.94916e-09, 0.999286)
+bones/4/rotation = Quaternion(-0.0363388, 2.6197e-09, -2.92921e-09, 0.99934)
 bones/5/rotation = Quaternion(0.0034532, 0.00659531, -0.689901, 0.723865)
 bones/6/position = Vector3(0.000198333, 10.6318, -7.99242e-05)
-bones/6/rotation = Quaternion(-0.0160714, 0.0823917, -0.591299, 0.802072)
+bones/6/rotation = Quaternion(-0.0157949, 0.081579, -0.590804, 0.802525)
 bones/7/position = Vector3(-0.000309722, 19.8107, 9.89807e-05)
-bones/7/rotation = Quaternion(0.27492, -0.658833, -0.147273, 0.684594)
+bones/7/rotation = Quaternion(0.274614, -0.658782, -0.147071, 0.68481)
 bones/8/position = Vector3(6.08109e-05, 18.4529, -2.20622e-05)
 bones/8/rotation = Quaternion(0.111513, 0.878494, -0.125152, 0.447382)
 bones/9/position = Vector3(-1.22997, 8.21134, 0.541571)
@@ -915,9 +913,9 @@ bones/22/rotation = Quaternion(0.399338, 0.245846, -0.0781066, 0.879766)
 bones/23/position = Vector3(-6.07402e-05, 2.81428, 7.32448e-05)
 bones/24/rotation = Quaternion(0.00345325, -0.00659526, 0.689901, 0.723865)
 bones/25/position = Vector3(-0.000198306, 10.6318, -7.98023e-05)
-bones/25/rotation = Quaternion(-0.0160037, -0.0821928, 0.591178, 0.802182)
+bones/25/rotation = Quaternion(-0.0159073, -0.0819094, 0.591005, 0.802341)
 bones/26/position = Vector3(0.000311516, 19.8107, 0.000100698)
-bones/26/rotation = Quaternion(0.273919, 0.658665, 0.146613, 0.685298)
+bones/26/rotation = Quaternion(0.274245, 0.65872, 0.146828, 0.685069)
 bones/27/position = Vector3(-6.20635e-05, 18.4529, -1.91687e-05)
 bones/27/rotation = Quaternion(0.111513, -0.878494, 0.125152, 0.447382)
 bones/28/position = Vector3(1.22997, 8.21134, 0.541573)
@@ -949,28 +947,28 @@ bones/40/rotation = Quaternion(-0.267221, 0.770981, 0.538891, -0.20923)
 bones/41/position = Vector3(6.49659e-05, 2.41782, -0.000207755)
 bones/41/rotation = Quaternion(0.399275, -0.245733, 0.0782084, 0.879817)
 bones/42/position = Vector3(-0.000194195, 2.81332, 0.00013998)
-bones/43/rotation = Quaternion(0.124395, -1.85438e-09, 3.43894e-09, 0.992233)
+bones/43/rotation = Quaternion(0.120038, -1.8543e-09, 3.43878e-09, 0.992769)
 bones/44/position = Vector3(-4.26326e-14, 9.35612, 0.000141649)
 bones/44/rotation = Quaternion(-0.21385, -5.23804e-10, 1.16017e-09, 0.976867)
 bones/45/position = Vector3(7.9319, -2.35348, -1.35572)
-bones/45/rotation = Quaternion(0.940296, 0.201883, -0.269509, -0.0495154)
+bones/45/rotation = Quaternion(0.940492, 0.20077, -0.270339, -0.0456372)
 bones/46/position = Vector3(3.2709e-06, 32.5686, -7.26799e-05)
-bones/46/rotation = Quaternion(0.223082, 0.243294, -0.0415905, 0.943034)
+bones/46/rotation = Quaternion(0.229614, 0.245207, -0.0445956, 0.940831)
 bones/47/position = Vector3(0.000426019, 31.1547, -1.01913e-05)
-bones/47/rotation = Quaternion(-0.430852, 0.0821124, 0.142992, 0.88723)
+bones/47/rotation = Quaternion(-0.434046, 0.0814457, 0.14305, 0.885724)
 bones/48/position = Vector3(-0.000454548, 9.98217, 7.08077e-05)
 bones/48/rotation = Quaternion(-0.268793, 0.0202766, 0.0276453, 0.962588)
 bones/49/position = Vector3(-7.9319, -2.35348, -1.35572)
-bones/49/rotation = Quaternion(0.849016, -0.304802, 0.281344, -0.327283)
+bones/49/rotation = Quaternion(0.849406, -0.304466, 0.281708, -0.326267)
 bones/50/position = Vector3(-3.18577e-06, 32.5686, -7.37654e-05)
-bones/50/rotation = Quaternion(0.233672, -0.40074, 0.0698234, 0.883137)
+bones/50/rotation = Quaternion(0.236235, -0.401302, 0.0711037, 0.882097)
 bones/51/position = Vector3(-0.000426404, 31.1547, -9.55513e-06)
-bones/51/rotation = Quaternion(-0.717302, 0.0315061, -0.0828671, 0.691099)
+bones/51/rotation = Quaternion(-0.72028, 0.0322415, -0.0824961, 0.688006)
 bones/52/position = Vector3(0.000454592, 9.98217, 7.0228e-05)
 bones/52/rotation = Quaternion(-0.268793, -0.0202766, -0.0276453, 0.962588)
 
 [node name="sword" type="BoneAttachment3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D" index="8" node_paths=PackedStringArray("skills_container", "visual")]
-transform = Transform3D(-0.478522, -0.168486, 0.861759, 0.543848, -0.827385, 0.140225, 0.689381, 0.535766, 0.487553, -27.0705, 66.7196, 5.22404)
+transform = Transform3D(-0.478305, -0.168911, 0.861797, 0.5403, -0.83022, 0.137149, 0.692315, 0.531228, 0.488361, -27.0866, 66.5594, 5.20047)
 visible = false
 bone_name = "hand_r"
 bone_idx = 27
@@ -1104,7 +1102,7 @@ script = ExtResource("34_3x64e")
 active_skill = NodePath("../../../../SkillsContainer/ActiveSkill_6")
 
 [node name="hammer" type="BoneAttachment3D" parent="Player/MeshRoot/godot_chan_4/Godot_Chan/Skeleton3D" index="9" node_paths=PackedStringArray("skills_container", "visual")]
-transform = Transform3D(-0.478522, -0.168486, 0.861759, 0.543848, -0.827385, 0.140225, 0.689381, 0.535766, 0.487553, -27.0705, 66.7196, 5.22404)
+transform = Transform3D(-0.478305, -0.168911, 0.861797, 0.5403, -0.83022, 0.137149, 0.692315, 0.531228, 0.488361, -27.0866, 66.5594, 5.20047)
 visible = false
 bone_name = "hand_r"
 bone_idx = 27
@@ -1319,41 +1317,6 @@ label_settings = SubResource("LabelSettings_r5ivb")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="CharacterBody3D" parent="." instance=ExtResource("35_1n88h")]
-transform = Transform3D(-0.886938, 0, 0.461888, 0, 1, 0, -0.461888, 0, -0.886938, -1.10342, 0, 1.8653)
-
-[node name="GeneralSkeleton" parent="CharacterBody3D/Killer" index="1"]
-bones/0/rotation = Quaternion(0.000896542, 0.000542937, 0.0392325, 0.99923)
-bones/1/rotation = Quaternion(0.230414, 0.00107443, -0.0219597, 0.972844)
-bones/2/rotation = Quaternion(0.111521, -0.00858516, 0.0393289, 0.992946)
-bones/3/rotation = Quaternion(0.0595648, 0.00568687, -0.0386297, 0.997461)
-bones/4/rotation = Quaternion(-0.124574, 0.0119251, -0.0030445, 0.992134)
-bones/5/rotation = Quaternion(1.11686e-17, 1.07499e-10, -2.3708e-10, 1)
-bones/7/rotation = Quaternion(0.504277, 0.492617, 0.500401, -0.502625)
-bones/8/rotation = Quaternion(-0.334636, 0.663145, -0.501718, -0.443324)
-bones/9/rotation = Quaternion(0.42941, -0.667101, 0.430387, 0.430523)
-bones/10/rotation = Quaternion(5.52973e-09, 0.707107, 5.52973e-09, 0.707107)
-bones/11/rotation = Quaternion(0.492617, -0.504277, -0.502625, -0.500401)
-bones/12/rotation = Quaternion(-0.51666, 0.735402, -0.324565, -0.294794)
-bones/13/rotation = Quaternion(0.240408, 0.491974, -0.421691, 0.722732)
-bones/14/rotation = Quaternion(-3.58e-08, -0.707107, -6.34689e-09, 0.707107)
-bones/15/rotation = Quaternion(0.0185443, 0.516682, 0.85593, 0.00898437)
-bones/16/rotation = Quaternion(0.000404784, 0.692804, -0.721126, 0.000529606)
-bones/17/rotation = Quaternion(-0.00130487, 0.517371, -0.855758, -0.00183993)
-bones/18/rotation = Quaternion(-6.58544e-09, 1, 0, 1.71222e-08)
-bones/20/rotation = Quaternion(0.01249, -0.4556, 0.890084, 0.00485803)
-bones/21/rotation = Quaternion(0.000540363, 0.775697, -0.631104, -0.00149233)
-bones/22/rotation = Quaternion(0.00167334, 0.725477, -0.688241, 0.00215597)
-bones/23/rotation = Quaternion(5.9269e-09, 1, 2.98023e-08, -8.56108e-09)
-
-[node name="AnimationPlayer" parent="CharacterBody3D/Killer" index="2"]
-process_mode = 3
-deterministic = true
-callback_mode_method = 1
-callback_mode_discrete = 2
-movie_quit_on_finish = true
-script = ExtResource("36_opjno")
-
 [connection signal="changed_movement_direction" from="Player" to="Player/MovementController" method="_on_set_movement_direction"]
 [connection signal="changed_movement_state" from="Player" to="Player/ActiveSkillController" method="_on_changed_movement_state"]
 [connection signal="changed_movement_state" from="Player" to="Player/MovementController" method="_on_set_movement_state"]
@@ -1370,5 +1333,3 @@ script = ExtResource("36_opjno")
 [connection signal="set_cam_rotation" from="Player/CamRoot" to="Player/MovementController" method="_on_set_cam_rotation"]
 
 [editable path="Player/MeshRoot/godot_chan_4"]
-[editable path="CharacterBody3D"]
-[editable path="CharacterBody3D/Killer"]
